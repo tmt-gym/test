@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>링 위에서 나는 어떤 파이터일까?</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @font-face {
+    font-family: 'Mujeokhaebeong';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2502-1@1.0/MarinesRegular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Mujeokhaebeong';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2502-1@1.0/MarinesBold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #fcf4ea;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color: #111;
+    width: 100%;
+    min-height: 100vh;
+  }
+  #app {
+    max-width: 440px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  .screen {
+    display: none;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 32px 24px 40px;
+    animation: fadeIn 0.35s ease;
+  }
+  .screen.active { display: flex; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== 공통 컴포넌트 ===== */
+  .btn-primary {
+    display: block; width: 100%; padding: 16px;
+    background: #111; color: #fcf4ea; border: none;
+    border-radius: 12px; font-size: 16px; font-weight: 600;
+    cursor: pointer; text-align: center;
+  }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+  .btn-secondary {
+    display: block; width: 100%; padding: 14px;
+    background: #fff; color: #111; border: 1px solid #ddd2bf;
+    border-radius: 12px; font-size: 14px; font-weight: 600;
+    cursor: pointer; text-align: center;
+  }
+  .btn-secondary:active { opacity: 0.85; transform: scale(0.98); }
+
+  /* ===== 시작 화면 ===== */
+  #screen-start { align-items: center; justify-content: center; text-align: center; }
+  .glove-wrap { width: 110px; height: 110px; margin-bottom: 28px; }
+  .badge {
+    font-size: 13px; letter-spacing: 0.12em; color: #c93a38;
+    font-weight: 600; margin-bottom: 14px; text-transform: uppercase;
+  }
+  .start-title {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 28px; color: #111;
+    line-height: 1.4; margin-bottom: 14px;
+  }
+  .start-sub {
+    font-size: 15px; color: #777; line-height: 1.6;
+    margin-bottom: 48px;
+  }
+  .start-btn-wrap { width: 100%; margin-bottom: 20px; }
+  .dot-row { display: flex; gap: 6px; justify-content: center; }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: #ddd2bf; }
+  .dot.on { background: #c93a38; width: 16px; border-radius: 2px; }
+
+  /* ===== 질문 화면 ===== */
+  #screen-quiz { justify-content: flex-start; }
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+  .progress-track { flex: 1; height: 4px; background: #ece2cd; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #c93a38; border-radius: 2px; transition: width 0.3s ease; }
+  .progress-count { font-size: 12px; color: #999; min-width: 40px; text-align: right; }
+
+  .q-type-tag {
+    font-size: 11px; font-weight: 600; color: #c93a38;
+    background: #fcebeb; display: inline-block; padding: 4px 10px;
+    border-radius: 20px; margin-bottom: 16px; width: fit-content;
+  }
+  .q-text {
+    font-size: 19px; font-weight: 700; color: #111;
+    line-height: 1.5; margin-bottom: 32px;
+  }
+  .option-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; text-align: left; background: #fff;
+    border: 1px solid #ddd2bf; border-radius: 12px;
+    padding: 16px; font-size: 14px; color: #222;
+    line-height: 1.5; cursor: pointer;
+  }
+  .option-btn:active { background: #f4ece0; transform: scale(0.99); }
+  .option-letter {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: #f1efe8; color: #555; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .prev-btn {
+    font-size: 13px; color: #999; background: none; border: none;
+    cursor: pointer; padding: 8px 4px; width: fit-content;
+  }
+
+  /* ===== 결과 화면 ===== */
+  #screen-result { align-items: center; padding-top: 28px; }
+  .result-tag {
+    font-size: 12px; font-weight: 600; color: #fcf4ea;
+    background: #111; padding: 5px 12px; border-radius: 20px;
+    margin-bottom: 18px;
+  }
+  .result-type-name {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 32px; color: #111; margin-bottom: 8px; text-align: center;
+  }
+  .result-copy-sub { font-size: 14px; color: #444; text-align: center; line-height: 1.6; margin-bottom: 10px; }
+  .result-quote { font-size: 13px; color: #c93a38; text-align: center; margin-bottom: 24px; font-weight: 600; }
+  .result-char-box {
+    width: 100%; height: 230px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: center;
+    color: #b3a78f; font-size: 12px; border: 1px dashed #d8cab0;
+    border-radius: 14px; background: #fff;
+  }
+  .result-char-box img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
+  .desc-card {
+    width: 100%; background: #fff; border: 1px solid #e5dac5;
+    border-radius: 14px; padding: 18px 20px; font-size: 14px;
+    color: #333; line-height: 1.75; margin-bottom: 26px;
+  }
+  .chart-wrap { width: 100%; margin-bottom: 28px; }
+  .feature-card {
+    width: 100%; background: #111; border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 24px;
+  }
+  .feature-title { font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700; font-size: 17px; color: #fcf4ea; text-align: center; margin-bottom: 14px; }
+  .feature-item { display: flex; gap: 8px; font-size: 13px; color: #e8e0d2; line-height: 1.7; margin-bottom: 8px; }
+  .feature-item:last-child { margin-bottom: 0; }
+  .feature-dot { color: #e24b4a; flex-shrink: 0; }
+  .strength-row { display: flex; gap: 8px; width: 100%; margin-bottom: 26px; }
+  .strength-card {
+    flex: 1; background: #fff; border: 1px solid #e5dac5;
+    border-radius: 12px; padding: 14px;
+  }
+  .strength-label { font-size: 11px; font-weight: 700; color: #999; margin-bottom: 8px; }
+  .strength-text { font-size: 13px; color: #333; line-height: 1.55; }
+  .section-label {
+    font-size: 14px; color: #c93a38; font-weight: 700;
+    margin-bottom: 12px; width: 100%; text-align: left;
+  }
+  .vs-row { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 26px; }
+  .vs-card {
+    background: #fff; border: 1px solid #e5dac5; border-radius: 12px;
+    padding: 14px; display: flex; align-items: center; gap: 12px;
+  }
+  .vs-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px; font-weight: 700;
+  }
+  .vs-best .vs-icon { background: #fcebeb; color: #791f1f; }
+  .vs-worst .vs-icon { background: #f1efe8; color: #444441; }
+  .vs-name { font-size: 14px; font-weight: 700; color: #111; }
+  .vs-reason { font-size: 12px; color: #888; margin-top: 2px; }
+  .other-types { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; margin-bottom: 28px; }
+  .other-pill {
+    font-size: 13px; color: #555; border: 1px solid #ddd2bf;
+    background: #fff; border-radius: 20px; padding: 8px 16px;
+    cursor: pointer;
+  }
+  .other-pill:active { background: #f4ece0; }
+  .result-btn-row { display: flex; gap: 8px; width: 100%; }
+  .result-btn-row .btn-primary, .result-btn-row .btn-secondary { flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===================== 1. 시작 화면 ===================== -->
+  <section class="screen active" id="screen-start">
+    <div class="glove-wrap">
+      <svg viewBox="0 0 100 100" width="100%" height="100%" role="img" aria-label="복싱 글러브 아이콘">
+        <rect x="20" y="35" width="48" height="42" rx="10" fill="#c93a38"/>
+        <rect x="18" y="55" width="52" height="22" rx="8" fill="#a32d2d"/>
+        <rect x="22" y="35" width="42" height="14" rx="7" fill="#c93a38"/>
+        <rect x="28" y="22" width="12" height="18" rx="6" fill="#c93a38"/>
+        <rect x="42" y="20" width="12" height="18" rx="6" fill="#c93a38"/>
+        <rect x="56" y="24" width="10" height="15" rx="5" fill="#c93a38"/>
+        <rect x="20" y="72" width="48" height="5" rx="2" fill="#791f1f"/>
+      </svg>
+    </div>
+    <div class="badge">복싱 스타일 유형 검사</div>
+    <h1 class="start-title">링 위에서 나는<br>어떤 파이터일까?</h1>
+    <p class="start-sub">11가지 질문으로 알아보는<br>나만의 복싱 DNA</p>
+    <div class="start-btn-wrap">
+      <button class="btn-primary" onclick="startQuiz()">검사 시작하기</button>
+    </div>
+    <div class="dot-row">
+      <div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+  </section>
+
+  <!-- ===================== 2. 질문 화면 ===================== -->
+  <section class="screen" id="screen-quiz">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-count" id="progress-count">1 / 11</div>
+    </div>
+    <div class="q-type-tag" id="q-type-tag">상황형</div>
+    <h2 class="q-text" id="q-text">질문이 표시됩니다</h2>
+    <div class="option-list" id="option-list"></div>
+    <button class="prev-btn" id="prev-btn" onclick="prevQuestion()">← 이전으로</button>
+  </section>
+
+  <!-- ===================== 3. 결과 화면 ===================== -->
+  <section class="screen" id="screen-result">
+    <div class="result-tag">내 유형</div>
+    <h1 class="result-type-name" id="result-type-name"></h1>
+    <p class="result-copy-sub" id="result-copy-sub"></p>
+    <p class="result-quote" id="result-quote"></p>
+
+    <div class="result-char-box" id="result-char-box">캐릭터 일러스트</div>
+
+    <div class="desc-card" id="result-desc"></div>
+
+    <div class="chart-wrap">
+      <div style="position: relative; height: 230px;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-title" id="feature-title"></div>
+      <div id="feature-list"></div>
+    </div>
+
+    <div class="strength-row">
+      <div class="strength-card">
+        <div class="strength-label">강한 상황</div>
+        <div class="strength-text" id="strength-good"></div>
+      </div>
+      <div class="strength-card">
+        <div class="strength-label">약한 상황</div>
+        <div class="strength-text" id="strength-bad"></div>
+      </div>
+    </div>
+
+    <div class="vs-row">
+      <div class="section-label">스파링 궁합</div>
+      <div class="vs-card vs-best">
+        <div class="vs-icon">★</div>
+        <div>
+          <div class="vs-name" id="vs-best-name"></div>
+          <div class="vs-reason" id="vs-best-reason"></div>
+        </div>
+      </div>
+      <div class="vs-card vs-worst">
+        <div class="vs-icon">×</div>
+        <div>
+          <div class="vs-name" id="vs-worst-name"></div>
+          <div class="vs-reason" id="vs-worst-reason"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">다른 유형 보기</div>
+    <div class="other-types" id="other-types"></div>
+
+    <div class="result-btn-row">
+      <button class="btn-primary" id="save-image-btn">이미지 저장</button>
+      <button class="btn-secondary" onclick="restartQuiz()">다시 하기</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ===================== 질문 데이터 =====================
+// 유형 키: OUT(아웃복서) / SLU(슬러거) / SWA(인파이터) / BOP(복서-펀처) / COU(카운터펀처)
+
+const QUESTIONS = [
+  {
+    type: "상황형",
+    text: "링에 올랐더니 상대가 처음부터 돌진해온다. 어떻게 할래?",
+    options: [
+      { text: "옆으로 빠지면서 거리를 벌린다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 0 } },
+      { text: "나도 맞받아치며 정면으로 간다", scores: { OUT: 0, SLU: 2, SWA: 1, BOP: 0, COU: 0 } },
+      { text: "피하면서 상대가 지나치는 순간 역으로 때린다", scores: { OUT: 0, SLU: 0, SWA: 0, BOP: 1, COU: 2 } }
+    ]
+  },
+  {
+    type: "상황형",
+    text: "3라운드째, 내가 점수에서 뒤지고 있다. 어떻게 할래?",
+    options: [
+      { text: "거리를 유지하면서 차근차근 따라잡는다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 0 } },
+      { text: "KO를 노리고 과감하게 밀어붙인다", scores: { OUT: 0, SLU: 2, SWA: 1, BOP: 1, COU: 0 } },
+      { text: "상대가 조급해질 때까지 기다렸다가 역습한다", scores: { OUT: 0, SLU: 0, SWA: 0, BOP: 0, COU: 2 } }
+    ]
+  },
+  {
+    type: "상황형",
+    text: "상대가 자꾸 붙어서 클린치를 걸어온다. 어떻게 할래?",
+    options: [
+      { text: "빠르게 빠져나와 다시 거리를 만든다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "나도 안에서 짧게 때리며 맞선다", scores: { OUT: 0, SLU: 1, SWA: 2, BOP: 1, COU: 0 } }
+    ]
+  },
+  {
+    type: "상황형",
+    text: "상대의 빈틈이 보였다. 어떻게 할래?",
+    options: [
+      { text: "잽으로 먼저 확인하고 들어간다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "바로 풀스윙으로 때린다", scores: { OUT: 0, SLU: 2, SWA: 1, BOP: 0, COU: 0 } },
+      { text: "한 박자 더 기다렸다가 확실한 순간에 때린다", scores: { OUT: 0, SLU: 0, SWA: 0, BOP: 1, COU: 2 } }
+    ]
+  },
+  {
+    type: "상황형",
+    text: "다운을 당했다. 일어났다. 이제 어떻게 할래?",
+    options: [
+      { text: "거리를 벌리고 정신을 가다듬는다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "오히려 더 거세게 달려든다", scores: { OUT: 0, SLU: 2, SWA: 2, BOP: 0, COU: 0 } },
+      { text: "상대가 마무리하러 올 때 카운터를 노린다", scores: { OUT: 0, SLU: 0, SWA: 0, BOP: 1, COU: 2 } }
+    ]
+  },
+  {
+    type: "상황형",
+    text: "마지막 라운드, 체력이 거의 바닥났다. 어떻게 할래?",
+    options: [
+      { text: "발을 움직이며 버티면서 최대한 맞지 않는다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "마지막 힘을 모아 한 방을 노린다", scores: { OUT: 0, SLU: 2, SWA: 1, BOP: 1, COU: 0 } }
+    ]
+  },
+  {
+    type: "성향형",
+    text: "싸우기 전, 나는 어떤 편이야?",
+    options: [
+      { text: "상대를 분석하고 작전을 짜고 들어간다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 2 } },
+      { text: "일단 부딪혀보면서 파악한다", scores: { OUT: 0, SLU: 2, SWA: 2, BOP: 1, COU: 0 } }
+    ]
+  },
+  {
+    type: "성향형",
+    text: "때리는 스타일은?",
+    options: [
+      { text: "한 방 크게", scores: { OUT: 0, SLU: 3, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "여러 번 빠르고 정확하게", scores: { OUT: 2, SLU: 0, SWA: 3, BOP: 1, COU: 0 } }
+    ]
+  },
+  {
+    type: "성향형",
+    text: "경기 흐름을 어떻게 가져와?",
+    options: [
+      { text: "상대가 지칠 때까지 기다린다", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 0, COU: 2 } },
+      { text: "내가 먼저 치고 나가며 흐름을 만든다", scores: { OUT: 0, SLU: 1, SWA: 2, BOP: 2, COU: 0 } }
+    ]
+  },
+  {
+    type: "성향형",
+    text: "더 중요한 건?",
+    options: [
+      { text: "실수하지 않는 것", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 2 } },
+      { text: "위험해도 과감하게 가는 것", scores: { OUT: 0, SLU: 2, SWA: 2, BOP: 1, COU: 0 } }
+    ]
+  },
+  {
+    type: "성향형",
+    text: "어디서 싸우는 게 편해?",
+    options: [
+      { text: "거리를 두고 멀리서", scores: { OUT: 2, SLU: 0, SWA: 0, BOP: 1, COU: 1 } },
+      { text: "바짝 붙어서", scores: { OUT: 0, SLU: 2, SWA: 2, BOP: 1, COU: 0 } }
+    ]
+  }
+];
+
+// ===================== 유형별 결과 콘텐츠 =====================
+
+const TYPES = {
+  OUT: {
+    name: "아웃복서",
+    copySub: "거리와 기술로 링을 지배하는 두뇌파",
+    quote: "잡고 싶으면 먼저 따라잡아봐",
+    desc: "링 위의 체스 플레이어다. 무작정 치고받는 대신 거리를 유지하면서 상대를 읽고, 빈틈이 생길 때만 정확하게 파고든다. 화려하진 않지만 가장 완성도 높은 스타일이다.",
+    stats: { 공격력: 60, 스피드: 90, 체력: 70, 수비력: 80, 전략성: 90 },
+    features: [
+      "빠른 발놀림으로 거리를 지배한다",
+      "잽으로 리듬을 만들고 점수를 쌓는다",
+      "피하며 동시에 때리는 고난도 기술이다"
+    ],
+    good: "오래 가는 경기, 점수로 승부하는 판정전",
+    bad: "난타전, 클린치가 잦은 경기",
+    vsBest: { name: "슬러거", reason: "기술 vs 파워, 가장 클래식한 대결" },
+    vsWorst: { name: "인파이터", reason: "거리를 만들 틈이 없다" },
+    image: "images/outboxer.png"
+  },
+  SLU: {
+    name: "슬러거",
+    copySub: "단 한 방으로 경기를 끝내는 파괴자",
+    quote: "두 방은 사치야",
+    desc: "맞아도 괜찮다. 어차피 한 방이면 끝난다. 기술보다 압도적인 파워로 상대를 제압하는 스타일이다. 지고 있어도 한 방이면 역전이 가능해서 상대 입장에선 끝까지 긴장을 놓을 수 없다.",
+    stats: { 공격력: 100, 스피드: 50, 체력: 70, 수비력: 40, 전략성: 50 },
+    features: [
+      "폭발적인 펀치력으로 한 방에 무너뜨린다",
+      "맞으면서도 전진하는 강한 정신력이 핵심이다",
+      "빈틈이 보이면 모든 힘을 쏟아 넣는다"
+    ],
+    good: "단기전, 한 방으로 흐름이 바뀌는 경기",
+    bad: "장기전, 체력이 바닥나는 후반 라운드",
+    vsBest: { name: "아웃복서", reason: "한 방 역전극의 가장 짜릿한 무대" },
+    vsWorst: { name: "카운터펀처", reason: "공격할수록 역으로 얻어맞는다" },
+    image: "images/slugger.png"
+  },
+  SWA: {
+    name: "인파이터",
+    copySub: "거리가 좁혀질수록 강해지는 근접전의 지배자",
+    quote: "멈추면 지는 거야",
+    desc: "가까이 붙는 걸 두려워하지 않는다. 오히려 가까울수록 더 강해진다. 쉬지 않고 앞으로 나아가며 연타를 퍼붓고 상대가 숨 쉴 틈을 주지 않는다.",
+    stats: { 공격력: 75, 스피드: 80, 체력: 100, 수비력: 60, 전략성: 55 },
+    features: [
+      "근접전을 두려워하지 않고 더 강해진다",
+      "끊임없는 압박으로 상대 리듬을 무너뜨린다",
+      "체력과 맷집 없이는 구사하기 힘든 스타일이다"
+    ],
+    good: "난타전, 체력전, 후반 라운드로 갈수록 강해짐",
+    bad: "거리가 벌어질 때, 클린치가 잦은 경기",
+    vsBest: { name: "복서-펀처", reason: "압박과 기술이 맞붙는 가장 치열한 공방" },
+    vsWorst: { name: "아웃복서", reason: "아무리 쫓아가도 잡히지 않는다" },
+    image: "images/infighter.png"
+  },
+  BOP: {
+    name: "복서-펀처",
+    copySub: "기술과 파워를 모두 갖춘 다재다능형",
+    quote: "약점을 찾고 싶으면 찾아봐",
+    desc: "뭐든 된다. 거리를 벌렸다가 바짝 붙어서 강타를 날리고, 상대에 따라 전략을 자유롭게 바꾼다. 딱 한 가지로 정의할 수 없는 게 이 스타일의 가장 무서운 점이다.",
+    stats: { 공격력: 80, 스피드: 75, 체력: 75, 수비력: 75, 전략성: 80 },
+    features: [
+      "거리 조절과 근거리 강타를 자유롭게 오간다",
+      "기술과 파워를 동시에 갖춰 약점이 적다",
+      "세계 챔피언 대부분이 이 유형에 속한다"
+    ],
+    good: "어떤 상대든 전략을 맞출 수 있는 범용성",
+    bad: "극단적인 스페셜리스트에게 밀릴 수 있음",
+    vsBest: { name: "인파이터", reason: "압박과 기술이 맞붙는 치열한 공방" },
+    vsWorst: { name: "카운터펀처", reason: "서로 기다리는 싸움이 돼 지루해질 수 있음" },
+    image: "images/boxerpuncher.png"
+  },
+  COU: {
+    name: "카운터펀처",
+    copySub: "상대의 실수를 기다리는 냉혹한 계산가",
+    quote: "쳐봐, 기다리고 있었어",
+    desc: "링 위의 저격수다. 먼저 치지 않는다. 상대의 공격을 흘리거나 피하면서 빈틈이 생기는 순간 정확한 역습을 날린다. 상대가 조급해질수록 더 유리해지는 스타일이다.",
+    stats: { 공격력: 70, 스피드: 70, 체력: 65, 수비력: 95, 전략성: 95 },
+    features: [
+      "상대의 공격을 피하며 역습 타이밍을 노린다",
+      "심리전에 강하고 침착함이 생명이다",
+      "상대가 공격적일수록 더 강해진다"
+    ],
+    good: "상대가 공격적일 때, 심리전, 장기전",
+    bad: "상대도 소극적일 때, 클린치로 흐름 끊길 때",
+    vsBest: { name: "슬러거", reason: "공격적으로 나올수록 카운터 찬스가 늘어난다" },
+    vsWorst: { name: "슬러거가 신중할 때", reason: "서로 안 치는 최악의 그림" },
+    image: "images/counterpuncher.png"
+  }
+};
+
+const TYPE_ORDER = ["OUT", "SLU", "SWA", "BOP", "COU"];
+
+// ===================== 상태 관리 =====================
+let currentQuestionIndex = 0;
+let userAnswers = [];
+let radarChartInstance = null;
+
+// ===================== 화면 전환 =====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startQuiz() {
+  currentQuestionIndex = 0;
+  userAnswers = [];
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function restartQuiz() {
+  showScreen('screen-start');
+}
+
+// ===================== 질문 렌더링 =====================
+function renderQuestion() {
+  const q = QUESTIONS[currentQuestionIndex];
+  const total = QUESTIONS.length;
+
+  const percent = ((currentQuestionIndex) / total) * 100;
+  document.getElementById('progress-fill').style.width = percent + '%';
+  document.getElementById('progress-count').textContent = (currentQuestionIndex + 1) + ' / ' + total;
+
+  document.getElementById('q-type-tag').textContent = q.type;
+  document.getElementById('q-text').textContent = q.text;
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const listEl = document.getElementById('option-list');
+  listEl.innerHTML = '';
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = '<span class="option-letter">' + letters[idx] + '</span><span>' + opt.text + '</span>';
+    btn.onclick = () => selectOption(opt);
+    listEl.appendChild(btn);
+  });
+
+  document.getElementById('prev-btn').style.visibility = currentQuestionIndex === 0 ? 'hidden' : 'visible';
+}
+
+function selectOption(option) {
+  userAnswers[currentQuestionIndex] = option.scores;
+
+  if (currentQuestionIndex < QUESTIONS.length - 1) {
+    currentQuestionIndex++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderQuestion();
+  }
+}
+
+// ===================== 점수 계산 =====================
+function calculateResult() {
+  const totals = { OUT: 0, SLU: 0, SWA: 0, BOP: 0, COU: 0 };
+
+  userAnswers.forEach(scoreObj => {
+    if (!scoreObj) return;
+    Object.keys(scoreObj).forEach(key => {
+      totals[key] += scoreObj[key];
+    });
+  });
+
+  let maxScore = -1;
+  let topTypes = [];
+  Object.keys(totals).forEach(key => {
+    if (totals[key] > maxScore) {
+      maxScore = totals[key];
+      topTypes = [key];
+    } else if (totals[key] === maxScore) {
+      topTypes.push(key);
+    }
+  });
+
+  if (topTypes.length > 1) {
+    return 'BOP';
+  }
+  return topTypes[0];
+}
+
+// ===================== 결과 렌더링 =====================
+function showResult() {
+  const resultKey = calculateResult();
+  renderResultByType(resultKey);
+  showScreen('screen-result');
+}
+
+function renderResultByType(typeKey) {
+  const t = TYPES[typeKey];
+
+  document.getElementById('result-type-name').textContent = t.name;
+  document.getElementById('result-copy-sub').textContent = t.copySub;
+  document.getElementById('result-quote').textContent = '"' + t.quote + '"';
+  document.getElementById('result-desc').textContent = t.desc;
+
+  const charBox = document.getElementById('result-char-box');
+  charBox.innerHTML = '';
+  const img = new Image();
+  img.onload = () => {
+    charBox.innerHTML = '';
+    charBox.appendChild(img);
+  };
+  img.onerror = () => {
+    charBox.textContent = t.name + ' 캐릭터 이미지';
+  };
+  img.src = t.image;
+  img.alt = t.name + ' 캐릭터 일러스트';
+
+  document.getElementById('feature-title').textContent = t.name + '는 어떻게 싸울까?';
+  const featureListEl = document.getElementById('feature-list');
+  featureListEl.innerHTML = '';
+  t.features.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'feature-item';
+    div.innerHTML = '<span class="feature-dot">•</span><span>' + f + '</span>';
+    featureListEl.appendChild(div);
+  });
+
+  document.getElementById('strength-good').textContent = t.good;
+  document.getElementById('strength-bad').textContent = t.bad;
+
+  document.getElementById('vs-best-name').textContent = '최고의 상대 — ' + t.vsBest.name;
+  document.getElementById('vs-best-reason').textContent = t.vsBest.reason;
+  document.getElementById('vs-worst-name').textContent = '최악의 상대 — ' + t.vsWorst.name;
+  document.getElementById('vs-worst-reason').textContent = t.vsWorst.reason;
+
+  const otherEl = document.getElementById('other-types');
+  otherEl.innerHTML = '';
+  TYPE_ORDER.filter(key => key !== typeKey).forEach(key => {
+    const pill = document.createElement('div');
+    pill.className = 'other-pill';
+    pill.textContent = TYPES[key].name;
+    pill.onclick = () => renderResultByType(key);
+    otherEl.appendChild(pill);
+  });
+
+  renderRadarChart(t.stats);
+}
+
+function renderRadarChart(stats) {
+  const labels = Object.keys(stats);
+  const values = Object.values(stats);
+
+  if (radarChartInstance) {
+    radarChartInstance.destroy();
+  }
+
+  const ctx = document.getElementById('radarChart');
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: 'rgba(201, 58, 56, 0.15)',
+        borderColor: '#c93a38',
+        borderWidth: 2,
+        pointBackgroundColor: '#c93a38',
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { display: false, stepSize: 25 },
+          grid: { color: '#e5dac5' },
+          angleLines: { color: '#e5dac5' },
+          pointLabels: { font: { size: 12 }, color: '#444' }
+        }
+      }
+    }
+  });
+}
+
+// ===================== 이미지 저장 =====================
+document.addEventListener('DOMContentLoaded', function () {
+  const saveBtn = document.getElementById('save-image-btn');
+  saveBtn.addEventListener('click', function () {
+    const resultScreen = document.getElementById('screen-result');
+    const btn = this;
+    const originalText = btn.textContent;
+    btn.textContent = '저장 중...';
+    btn.disabled = true;
+
+    html2canvas(resultScreen, {
+      backgroundColor: '#fcf4ea',
+      scale: 2,
+      useCORS: true
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = '내복싱스타일_결과.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }).catch(err => {
+      console.error('이미지 저장 실패:', err);
+      alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
+  });
+});
+</script>
+</body>
+</html>
