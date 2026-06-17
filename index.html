@@ -81,17 +81,17 @@
 
   /* ===== 시작 화면 ===== */
   #screen-start { align-items: center; justify-content: center; text-align: center; }
-  .title-image-slot { width: 340px; max-width: 100%; margin-bottom: 28px; }
+  .title-image-slot { width: 340px; max-width: 100%; margin-bottom: 16px; }
   .title-image-slot img { width: 100%; height: auto; display: block; }
   .start-title {
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
-    font-size: 28px; color: #111;
-    line-height: 1.4; margin-bottom: 14px;
+    font-size: 32px; color: #111;
+    line-height: 1.3; margin-bottom: 14px;
   }
   .start-sub {
     font-family: 'Pretendard', sans-serif; font-weight: 500;
-    font-size: 16px; color: #777; line-height: 1.7;
-    margin-bottom: 48px;
+    font-size: 18px; color: #666; line-height: 1.5;
+    margin-bottom: 32px;
   }
   .start-btn-wrap { width: 100%; margin-bottom: 20px; }
 
@@ -120,7 +120,7 @@
   .option-btn:active { background: #111; color: #fcf4ea; transform: scale(0.99); }
   .prev-btn {
     font-family: 'Pretendard', sans-serif; font-weight: 500;
-    font-size: 13px; color: #999; background: none; border: none;
+    font-size: 15px; color: #999; background: none; border: none;
     cursor: pointer; padding: 8px 4px; width: fit-content;
   }
 
@@ -129,9 +129,9 @@
   #result-capture-area { width: 100%; background: #fcf4ea; }
   .result-tag {
     font-family: 'Pretendard', sans-serif;
-    font-size: 12px; font-weight: 600; color: #fcf4ea;
+    font-size: 14px; font-weight: 600; color: #fcf4ea;
     background: #111; padding: 5px 12px; border-radius: 20px;
-    margin-bottom: 18px;
+    margin: 0 auto 18px; text-align: center; width: fit-content;
   }
   .result-type-name {
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
@@ -139,11 +139,11 @@
   }
   .result-copy-sub {
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
-    font-size: 20px; color: #444; text-align: center; line-height: 1.6; margin-bottom: 10px;
+    font-size: 20px; color: #444; text-align: center; line-height: 1.6; margin-bottom: 20px;
   }
   .result-quote {
     font-family: 'KyoboHandwriting2023', sans-serif;
-    font-size: 20px; color: #c93a38; text-align: center; margin-bottom: 24px;
+    font-size: 22px; color: #c93a38; text-align: center; margin-bottom: 24px;
   }
   .result-char-box {
     font-family: 'Pretendard', sans-serif;
@@ -157,7 +157,7 @@
     border-radius: 14px; padding: 18px 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     font-family: 'Pretendard', sans-serif; font-weight: 500;
-    font-size: 18px; color: #333; line-height: 1.85; margin-bottom: 26px;
+    font-size: 16px; color: #333; line-height: 1.6; margin-bottom: 26px;
   }
   .chart-wrap { width: 100%; margin-bottom: 28px; }
   .feature-card {
@@ -178,9 +178,9 @@
   }
   .feature-item:last-child { border-bottom: none; }
   .feature-dot { display: none; }
-  .strength-row { display: flex; gap: 8px; width: 100%; margin-bottom: 26px; }
+  .strength-row { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 26px; }
   .strength-card {
-    flex: 1; background: #fff; border: 1px solid #e5dac5;
+    width: 100%; background: #fff; border: 1px solid #e5dac5;
     border-radius: 12px; padding: 14px;
   }
   .strength-label { font-family: 'Pretendard', sans-serif; font-size: 16px; font-weight: 700; color: #111; margin-bottom: 8px; }
@@ -188,36 +188,28 @@
   .strength-line { font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 500; color: #333; line-height: 1.55; }
   .section-label {
     font-family: 'Mujeokhaebeong', sans-serif;
-    font-size: 18px; color: #c93a38; font-weight: 700;
+    font-size: 20px; color: #111; font-weight: 700;
     margin-bottom: 12px; width: 100%; text-align: left;
   }
   .chart-title {
     font-family: 'Mujeokhaebeong', sans-serif;
-    font-size: 18px; color: #111; font-weight: 700;
-    text-align: center; margin-bottom: 14px;
+    font-size: 20px; color: #111; font-weight: 700;
+    text-align: left; margin-bottom: 14px;
   }
   .vs-row { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 26px; }
   .vs-card-a {
     background: #fff; border: 1px solid #e5dac5; border-radius: 14px;
-    padding: 16px 12px; display: flex; align-items: flex-start; gap: 6px;
+    padding: 16px 12px; display: flex; align-items: stretch; gap: 6px;
   }
   .vs-side { flex: 1; text-align: center; min-width: 0; }
-  .vs-icon-slot {
-    width: 44px; height: 44px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 8px; overflow: hidden; background: #f1efe8;
-  }
-  .vs-best .vs-icon-slot { background: #fcebeb; }
-  .vs-worst .vs-icon-slot { background: #f1efe8; }
-  .vs-icon-slot img { width: 100%; height: 100%; object-fit: contain; }
-  .vs-divider { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #ccc; padding: 0 2px; flex-shrink: 0; margin-top: 18px; }
-  .vs-label { font-family: 'Pretendard', sans-serif; font-size: 16px; font-weight: 700; color: #999; margin-bottom: 4px; }
-  .vs-name { font-family: 'Mujeokhaebeong', sans-serif; font-weight: 400; font-size: 18px; color: #111; margin-bottom: 3px; }
+  .vs-divider { width: 1px; align-self: stretch; border-left: 1px dashed #ddd2bf; flex-shrink: 0; }
+  .vs-label { font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 700; color: #c93a38; margin-bottom: 4px; }
+  .vs-name { font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700; font-size: 18px; color: #111; margin-bottom: 3px; }
   .vs-reason { font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 500; color: #888; line-height: 1.5; }
   .other-types { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; margin-bottom: 28px; }
   .other-pill {
     font-family: 'Pretendard', sans-serif;
-    font-size: 13px; font-weight: 600; color: #555; border: 1px solid #ddd2bf;
+    font-size: 14px; font-weight: 600; color: #555; border: 1px solid #ddd2bf;
     background: #fff; border-radius: 20px; padding: 8px 16px;
     cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   }
@@ -266,7 +258,7 @@
   <!-- ===================== 3. 결과 화면 ===================== -->
   <section class="screen" id="screen-result">
     <div id="result-capture-area">
-      <div class="result-tag" id="result-tag">내 유형</div>
+      <div class="result-tag" id="result-tag">내 복싱 스타일은?</div>
       <h1 class="result-type-name" id="result-type-name"></h1>
       <p class="result-copy-sub" id="result-copy-sub"></p>
       <p class="result-quote" id="result-quote"></p>
@@ -302,18 +294,12 @@
         <div class="section-label">스파링 궁합</div>
         <div class="vs-card-a">
           <div class="vs-side vs-best">
-            <div class="vs-icon-slot" id="vs-best-icon">
-              <img src="images/vs-best-icon.png" alt="최고의 상대 아이콘" onerror="this.style.display='none'">
-            </div>
             <div class="vs-label">최고의 상대</div>
             <div class="vs-name" id="vs-best-name"></div>
             <div class="vs-reason" id="vs-best-reason"></div>
           </div>
-          <div class="vs-divider">VS</div>
+          <div class="vs-divider"></div>
           <div class="vs-side vs-worst">
-            <div class="vs-icon-slot" id="vs-worst-icon">
-              <img src="images/vs-worst-icon.png" alt="최악의 상대 아이콘" onerror="this.style.display='none'">
-            </div>
             <div class="vs-label">최악의 상대</div>
             <div class="vs-name" id="vs-worst-name"></div>
             <div class="vs-reason" id="vs-worst-reason"></div>
