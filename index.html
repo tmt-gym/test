@@ -144,7 +144,7 @@
   }
   .result-quote {
     font-family: 'KyoboHandwriting2023', sans-serif;
-    font-size: 22px; color: #c93a38; text-align: center; margin-bottom: 24px;
+    font-size: 22px; color: #c93a38; text-align: center; margin-bottom: 8px;
   }
   .result-char-box {
     font-family: 'Pretendard', sans-serif;
@@ -243,6 +243,11 @@
   .result-btn-stack { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .result-btn-row { display: flex; gap: 8px; width: 100%; }
   .result-btn-row .btn-secondary { flex: 1; }
+  .page-footer {
+    font-family: 'Pretendard', sans-serif; font-weight: 400;
+    font-size: 12px; color: #aaa; line-height: 1.6;
+    text-align: center; margin-top: 28px; width: 100%;
+  }
 </style>
 </head>
 <body>
@@ -258,6 +263,10 @@
     <p class="start-sub">11가지 질문으로 알아보는<br>나의 복싱 스타일</p>
     <div class="start-btn-wrap">
       <button class="btn-primary" onclick="startQuiz()">검사 시작하기</button>
+    </div>
+    <div class="page-footer">
+      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.<br>
+      문의: joa2013630@gmail.com
     </div>
   </section>
 
@@ -334,6 +343,10 @@
         <button class="btn-secondary" id="save-image-btn">이미지 저장</button>
         <button class="btn-secondary" onclick="restartQuiz()">다시 하기</button>
       </div>
+    </div>
+    <div class="page-footer">
+      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.<br>
+      문의: joa2013630@gmail.com
     </div>
   </section>
 
@@ -760,11 +773,15 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.textContent = '저장 중...';
     btn.disabled = true;
 
+    const originalPadding = resultScreen.style.padding;
+    resultScreen.style.padding = '0 20px';
+
     html2canvas(resultScreen, {
       backgroundColor: '#fcf4ea',
       scale: 2,
       useCORS: true
     }).then(canvas => {
+      resultScreen.style.padding = originalPadding;
       const link = document.createElement('a');
       link.download = '내복싱스타일_결과.png';
       link.href = canvas.toDataURL('image/png');
@@ -772,6 +789,7 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.textContent = originalText;
       btn.disabled = false;
     }).catch(err => {
+      resultScreen.style.padding = originalPadding;
       console.error('이미지 저장 실패:', err);
       alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
       btn.textContent = originalText;
