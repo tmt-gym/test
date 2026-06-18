@@ -7,6 +7,36 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAnTVYWbu-4KVUzHuvORNfv9s5H-wQjWOE",
+    authDomain: "tmt-boxing.firebaseapp.com",
+    databaseURL: "https://tmt-boxing-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tmt-boxing",
+    storageBucket: "tmt-boxing.firebasestorage.app",
+    messagingSenderId: "1097469480470",
+    appId: "1:1097469480470:web:eab1bc1db3a64c7600ef37"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const fbDb = getDatabase(fbApp);
+
+  window.saveResultToFirebase = function (typeKey, typeName) {
+    try {
+      const resultsRef = ref(fbDb, 'results');
+      push(resultsRef, {
+        typeKey: typeKey,
+        typeName: typeName,
+        timestamp: serverTimestamp()
+      });
+    } catch (e) {
+      console.error('Firebase 저장 실패:', e);
+    }
+  };
+</script>
 <style>
   @font-face {
     font-family: 'Mujeokhaebeong';
@@ -643,6 +673,9 @@ function showResult() {
   myTypeKey = resultKey;
   renderResultByType(resultKey);
   showScreen('screen-result');
+  if (typeof window.saveResultToFirebase === 'function') {
+    window.saveResultToFirebase(resultKey, TYPES[resultKey].name);
+  }
 }
 
 function renderResultByType(typeKey) {
