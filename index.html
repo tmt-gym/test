@@ -4,12 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>링 위에서 나는 어떤 파이터일까?</title>
+<meta name="description" content="11가지 질문으로 알아보는 나의 복싱 스타일">
+
+<!-- 링크 미리보기 (카카오톡·문자·SNS 공유 시 표시) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TMT GYM">
+<meta property="og:title" content="링 위에서 나는 어떤 파이터일까?">
+<meta property="og:description" content="11가지 질문으로 알아보는 나의 복싱 스타일">
+<meta property="og:url" content="https://tmt-gym.github.io/test/index.html">
+<meta property="og:image" content="https://tmt-gym.github.io/test/images/1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getDatabase, ref, push, get, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAnTVYWbu-4KVUzHuvORNfv9s5H-wQjWOE",
@@ -24,16 +36,35 @@
   const fbApp = initializeApp(firebaseConfig);
   const fbDb = getDatabase(fbApp);
 
-  window.saveResultToFirebase = function (typeKey, typeName) {
+  const TYPE_KEYS = ['OUT', 'SLU', 'SWA', 'BOP', 'COU'];
+
+  // 결과 저장: 개별 기록(results) + 유형별 참여 수(stats/counts) 1 증가
+  window.saveResultToFirebase = async function (typeKey, typeName) {
     try {
-      const resultsRef = ref(fbDb, 'results');
-      push(resultsRef, {
-        typeKey: typeKey,
-        typeName: typeName,
-        timestamp: serverTimestamp()
+      const jobs = [
+        push(ref(fbDb, 'results'), { typeKey: typeKey, typeName: typeName, timestamp: serverTimestamp() }),
+        runTransaction(ref(fbDb, 'stats/counts/' + typeKey), function (cur) { return (cur || 0) + 1; })
+      ];
+      const done = await Promise.allSettled(jobs);
+      done.forEach(function (r) {
+        if (r.status === 'rejected') console.error('Firebase 저장 실패:', r.reason);
       });
     } catch (e) {
       console.error('Firebase 저장 실패:', e);
+    }
+  };
+
+  // 유형별 참여 수 읽기 → { OUT: 12, SLU: 3, ... } (실패하면 null)
+  window.fetchTypeCounts = async function () {
+    try {
+      const snap = await get(ref(fbDb, 'stats/counts'));
+      const v = snap.val() || {};
+      const counts = {};
+      TYPE_KEYS.forEach(function (k) { counts[k] = Number(v[k]) || 0; });
+      return counts;
+    } catch (e) {
+      console.error('Firebase 통계 불러오기 실패:', e);
+      return null;
     }
   };
 </script>
@@ -78,6 +109,7 @@
     position: relative;
     overflow-x: hidden;
   }
+
   .screen {
     display: none;
     flex-direction: column;
@@ -123,6 +155,31 @@
     font-size: 18px; color: #666; line-height: 1.5;
     margin-bottom: 32px;
   }
+  .friend-card {
+    display: none; align-items: center; gap: 14px;
+    width: 100%; max-width: 340px; margin-bottom: 20px; padding: 14px 16px;
+    background: #fff; border-radius: 16px; text-align: left;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .friend-card-img { flex-shrink: 0; width: 64px; height: 64px; object-fit: contain; }
+  .friend-card-text { flex: 1; min-width: 0; }
+  .friend-card-label {
+    font-family: 'Pretendard', sans-serif; font-weight: 600;
+    font-size: 13px; color: #999; margin-bottom: 2px;
+  }
+  .friend-card-name {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 22px; color: #c93a38; margin-bottom: 2px;
+  }
+  .friend-card-copy {
+    font-family: 'Pretendard', sans-serif; font-weight: 500;
+    font-size: 14px; line-height: 1.4; color: #666;
+  }
+  .start-count {
+    display: none; margin-bottom: 12px;
+    font-family: 'Pretendard', sans-serif; font-weight: 600; font-size: 15px; color: #666;
+  }
+  .start-count b { font-weight: 700; color: #c93a38; }
   .start-btn-wrap { width: 100%; margin-bottom: 20px; }
 
   /* ===== 질문 화면 ===== */
@@ -172,9 +229,9 @@
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
     font-size: 20px; color: #222; text-align: center; line-height: 1.6; margin-bottom: 20px;
   }
-  .result-quote {
-    font-family: 'KyoboHandwriting2023', sans-serif;
-    font-size: 22px; color: #c93a38; text-align: center; margin-bottom: 8px;
+  .result-stat {
+    display: none; margin: -10px 0 20px; text-align: center;
+    font-family: 'Pretendard', sans-serif; font-weight: 500; font-size: 14px; color: #888;
   }
   .result-char-box {
     font-family: 'Pretendard', sans-serif;
@@ -209,29 +266,22 @@
   }
   .feature-item:last-child { border-bottom: none; }
   .feature-dot { display: none; }
-  .strength-row { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 26px; }
-  .strength-card {
-    width: 100%; background: #fff;
-    border-radius: 12px; padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border-left: 5px solid;
+  .feature-situations {
+    border-top: 1px dashed rgba(255,255,255,0.25);
+    padding: 6px 20px;
   }
-  .strength-card.good { border-left-color: #c93a38; }
-  .strength-card.bad { border-left-color: #999; }
-  .strength-label { font-family: 'Pretendard', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-  .strength-label.good { color: #c93a38; }
-  .strength-label.bad { color: #888; }
-  .strength-text { display: flex; flex-direction: column; gap: 4px; }
-  .strength-line {
+  .situation-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; }
+  .situation-label {
+    flex-shrink: 0; width: 62px;
+    font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 700; line-height: 1.7;
+  }
+  .situation-label.good { color: #e24b4a; }
+  .situation-label.bad { color: #999; }
+  .situation-text {
+    flex: 1; min-width: 0;
     font-family: 'Pretendard', sans-serif; font-size: 15px; font-weight: 500;
-    color: #333; line-height: 1.55;
-    display: flex; align-items: flex-start; gap: 8px;
+    color: #e8e0d2; line-height: 1.6;
   }
-  .strength-line::before {
-    content: ''; width: 5px; height: 5px; border-radius: 50%;
-    background: #c93a38; flex-shrink: 0; margin-top: 7px;
-  }
-  .strength-card.bad .strength-line::before { background: #999; }
   .section-label {
     font-family: 'Mujeokhaebeong', sans-serif;
     font-size: 20px; color: #111; font-weight: 700;
@@ -273,6 +323,118 @@
   .result-btn-stack { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .result-btn-row { display: flex; gap: 8px; width: 100%; }
   .result-btn-row .btn-secondary { flex: 1; }
+  /* ===== 전면 모달 공통 (흰 배경) ===== */
+  .full-modal {
+    position: fixed; inset: 0; z-index: 300;
+    background: #fff; display: none; overflow-y: auto;
+  }
+  .full-modal.active { display: block; animation: fadeIn 0.2s ease; }
+  .full-modal-bar {
+    position: sticky; top: 0; z-index: 2;
+    padding: 12px 0; background: #fff; flex-shrink: 0;
+  }
+  .full-modal-bar-inner {
+    max-width: 440px; margin: 0 auto; padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .full-modal-title {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 20px; color: #111;
+  }
+  .full-modal-close {
+    width: 40px; height: 40px; border: none; border-radius: 50%;
+    background: #f3f3f3; color: #111; font-size: 18px; cursor: pointer;
+  }
+
+  /* ----- 콘텐츠 전체보기: 배너 목록 ----- */
+  .banner-list {
+    max-width: 440px; margin: 0 auto; padding: 4px 20px 40px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .banner-item { display: block; border-radius: 16px; overflow: hidden; background: #f3f3f3; }
+  .banner-item img { display: block; width: 100%; height: auto; }
+  .banner-placeholder {
+    aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center;
+    text-align: center; color: #aaa; font-family: 'Pretendard', sans-serif;
+    font-size: 14px; font-weight: 500; line-height: 1.6; padding: 24px;
+  }
+
+  /* ----- TMT GYM 둘러보기 ----- */
+  .full-modal.gym-modal.active { display: flex; flex-direction: column; }
+  .gym-modal-body {
+    flex: 1 0 auto; width: 100%; max-width: 440px; margin: 0 auto;
+    padding: 4px 20px 24px;
+  }
+  .gym-name {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 26px; line-height: 1.3; color: #111; margin-bottom: 6px;
+  }
+  .gym-location {
+    font-family: 'Pretendard', sans-serif; font-weight: 500;
+    font-size: 15px; line-height: 1.5; color: #888; margin-bottom: 18px;
+  }
+  .gym-gallery {
+    display: flex; gap: 10px; overflow-x: auto;
+    margin: 0 -20px 20px; padding: 0 20px;
+  }
+  .gym-photo {
+    flex-shrink: 0; width: 220px; height: 160px; border-radius: 14px;
+    overflow: hidden; background: #f3f3f3;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    color: #aaa; font-family: 'Pretendard', sans-serif; font-size: 12px; font-weight: 500; line-height: 1.6;
+  }
+  .gym-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .gym-benefits {
+    background: #f7f7f7; border-radius: 14px; padding: 16px 20px; margin-bottom: 14px;
+    font-family: 'Pretendard', sans-serif; font-size: 16px; font-weight: 500;
+    line-height: 1.9; color: #333;
+  }
+  .gym-hours { background: #f7f7f7; border-radius: 14px; padding: 16px 20px; }
+  .gym-hours-label {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 18px; color: #111; margin-bottom: 6px;
+  }
+  .gym-hours-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0; font-family: 'Pretendard', sans-serif;
+    font-size: 15px; font-weight: 500; color: #333;
+  }
+  .gym-hours-row b { font-weight: 700; color: #111; }
+  .gym-hours-row .closed { font-weight: 700; color: #c93a38; }
+  .gym-modal-cta {
+    position: sticky; bottom: 0; flex-shrink: 0;
+    background: #fff; border-top: 1px solid #eee;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  }
+  .gym-modal-cta-inner { max-width: 440px; margin: 0 auto; padding: 0 20px; }
+  .gym-place-btn {
+    display: block; width: 100%; padding: 15px; border-radius: 12px;
+    background: #111; color: #fff; text-align: center; text-decoration: none;
+    font-family: 'Pretendard', sans-serif; font-size: 16px; font-weight: 700;
+  }
+  .gym-place-btn:active { opacity: 0.85; }
+
+  .more-section { width: 100%; margin-top: 32px; }
+  .more-section-label {
+    font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
+    font-size: 16px; color: #999; margin-bottom: 12px;
+  }
+  .more-card {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; background: #fff; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 8px;
+    text-decoration: none; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  }
+  .more-card:active { background: #f7f1e6; }
+  .more-card-title {
+    font-family: 'Pretendard', sans-serif; font-weight: 600;
+    font-size: 15px; color: #111; margin-bottom: 2px;
+  }
+  .more-card-desc {
+    font-family: 'Pretendard', sans-serif; font-weight: 400;
+    font-size: 12px; color: #999;
+  }
+  .more-card-arrow { font-size: 20px; color: #ccc; flex-shrink: 0; margin-left: 12px; }
   .page-footer {
     font-family: 'Pretendard', sans-serif; font-weight: 400;
     font-size: 12px; color: #aaa; line-height: 1.6;
@@ -291,12 +453,20 @@
     </div>
     <h1 class="start-title">링 위에서 나는<br>어떤 파이터일까?</h1>
     <p class="start-sub">11가지 질문으로 알아보는<br>나의 복싱 스타일</p>
+    <div class="friend-card" id="friend-card">
+      <img class="friend-card-img" id="friend-card-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
+      <div class="friend-card-text">
+        <div class="friend-card-label">친구의 복싱 스타일은</div>
+        <div class="friend-card-name" id="friend-card-name"></div>
+        <div class="friend-card-copy" id="friend-card-copy"></div>
+      </div>
+    </div>
+    <div class="start-count" id="start-count"></div>
     <div class="start-btn-wrap">
       <button class="btn-primary" onclick="startQuiz()">검사 시작하기</button>
     </div>
     <div class="page-footer">
-      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.<br>
-      문의: joa2013630@gmail.com
+      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.
     </div>
   </section>
 
@@ -317,7 +487,7 @@
       <div class="result-tag" id="result-tag">내 복싱 스타일은?</div>
       <h1 class="result-type-name" id="result-type-name"></h1>
       <p class="result-copy-sub" id="result-copy-sub"></p>
-      <p class="result-quote" id="result-quote"></p>
+      <p class="result-stat" id="result-stat"></p>
 
       <div class="result-char-box" id="result-char-box">캐릭터 일러스트</div>
 
@@ -333,16 +503,15 @@
       <div class="feature-card">
         <div class="feature-title" id="feature-title"></div>
         <div id="feature-list"></div>
-      </div>
-
-      <div class="strength-row">
-        <div class="strength-card good">
-          <div class="strength-label good">강한 상황</div>
-          <div class="strength-text" id="strength-good"></div>
-        </div>
-        <div class="strength-card bad">
-          <div class="strength-label bad">약한 상황</div>
-          <div class="strength-text" id="strength-bad"></div>
+        <div class="feature-situations">
+          <div class="situation-row">
+            <span class="situation-label good">강한 상황</span>
+            <span class="situation-text" id="strength-good"></span>
+          </div>
+          <div class="situation-row">
+            <span class="situation-label bad">약한 상황</span>
+            <span class="situation-text" id="strength-bad"></span>
+          </div>
         </div>
       </div>
 
@@ -368,15 +537,33 @@
     <div class="other-types" id="other-types"></div>
 
     <div class="result-btn-stack">
-      <button class="btn-primary" id="share-btn">공유하기</button>
+      <button class="btn-primary js-share" id="share-btn">내 결과 공유하기</button>
       <div class="result-btn-row">
         <button class="btn-secondary" id="save-image-btn">이미지 저장</button>
         <button class="btn-secondary" onclick="restartQuiz()">다시 하기</button>
       </div>
     </div>
+
+    <div class="more-section">
+      <div class="more-section-label">더 알아보기</div>
+      <a href="#" class="more-card" id="banner-modal-open">
+        <div class="more-card-text">
+          <div class="more-card-title">다양한 콘텐츠 보기</div>
+          <div class="more-card-desc">또 다른 재미있는 검사 보기</div>
+        </div>
+        <span class="more-card-arrow">›</span>
+      </a>
+      <a href="#" class="more-card" id="gym-modal-open">
+        <div class="more-card-text">
+          <div class="more-card-title">TMT GYM 둘러보기</div>
+          <div class="more-card-desc">체육관 위치와 프로그램 안내</div>
+        </div>
+        <span class="more-card-arrow">›</span>
+      </a>
+    </div>
+
     <div class="page-footer">
-      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.<br>
-      문의: joa2013630@gmail.com
+      © 2026 TMT GYM. 본 콘텐츠의 무단 복제 및 재배포를 금합니다.
     </div>
   </section>
 
@@ -668,22 +855,65 @@ function calculateResult() {
 }
 
 // ===================== 결과 렌더링 =====================
-function showResult() {
+// ===================== 참여 통계 =====================
+// 참여자가 너무 적을 때 숫자가 어색해 보이는 것을 막는 기준 (필요하면 숫자만 바꾸세요)
+const MIN_TOTAL_FOR_COUNT = 10;     // 이 인원 이상이면 시작 화면에 '○○명 참여 중!' 표시
+const MIN_TOTAL_FOR_PERCENT = 100;  // 이 인원 이상이면 결과 화면에 '전체 참여자의 ○%' 표시
+let typeCounts = null;              // { OUT: n, SLU: n, ... } / 불러오지 못하면 null
+let currentViewTypeKey = null;      // 지금 결과 화면에 보이는 유형
+
+function getTotalCount() {
+  return typeCounts ? TYPE_ORDER.reduce((sum, k) => sum + (typeCounts[k] || 0), 0) : 0;
+}
+
+function renderStartCount() {
+  const el = document.getElementById('start-count');
+  const total = getTotalCount();
+  if (!typeCounts || total < MIN_TOTAL_FOR_COUNT) { el.style.display = 'none'; return; }
+  el.innerHTML = '<b></b>명 참여 중!';
+  el.querySelector('b').textContent = total.toLocaleString('ko-KR');
+  el.style.display = 'block';
+}
+
+function updateStatLine(typeKey) {
+  const el = document.getElementById('result-stat');
+  const total = getTotalCount();
+  if (!typeCounts || total < MIN_TOTAL_FOR_PERCENT) { el.style.display = 'none'; return; }
+  const pct = Math.round((typeCounts[typeKey] || 0) / total * 100);
+  el.textContent = pct < 1
+    ? '전체 참여자의 1% 미만이 이 유형이에요'
+    : '전체 참여자의 ' + pct + '%가 이 유형이에요';
+  el.style.display = 'block';
+}
+
+async function refreshStats() {
+  if (typeof window.fetchTypeCounts !== 'function') return;
+  typeCounts = await window.fetchTypeCounts();   // 실패하면 null → 통계는 숨겨진다
+  renderStartCount();
+  if (currentViewTypeKey) updateStatLine(currentViewTypeKey);
+}
+
+document.addEventListener('DOMContentLoaded', refreshStats);
+
+async function showResult() {
   const resultKey = calculateResult();
   myTypeKey = resultKey;
+  typeCounts = null;   // 이전에 불러온 통계에는 '내 결과'가 빠져 있으니 비우고, 저장 후 다시 불러온다
   renderResultByType(resultKey);
   showScreen('screen-result');
   if (typeof window.saveResultToFirebase === 'function') {
-    window.saveResultToFirebase(resultKey, TYPES[resultKey].name);
+    await window.saveResultToFirebase(resultKey, TYPES[resultKey].name);
   }
+  await refreshStats();
 }
 
 function renderResultByType(typeKey) {
   const t = TYPES[typeKey];
+  currentViewTypeKey = typeKey;
+  updateStatLine(typeKey);
 
   document.getElementById('result-type-name').textContent = t.name;
   document.getElementById('result-copy-sub').textContent = t.copySub;
-  document.getElementById('result-quote').textContent = '"' + t.quote + '"';
   document.getElementById('result-desc').textContent = t.desc;
 
   const charBox = document.getElementById('result-char-box');
@@ -709,23 +939,8 @@ function renderResultByType(typeKey) {
     featureListEl.appendChild(div);
   });
 
-  const goodEl = document.getElementById('strength-good');
-  goodEl.innerHTML = '';
-  t.good.forEach(line => {
-    const p = document.createElement('div');
-    p.className = 'strength-line';
-    p.textContent = line;
-    goodEl.appendChild(p);
-  });
-
-  const badEl = document.getElementById('strength-bad');
-  badEl.innerHTML = '';
-  t.bad.forEach(line => {
-    const p = document.createElement('div');
-    p.className = 'strength-line';
-    p.textContent = line;
-    badEl.appendChild(p);
-  });
+  document.getElementById('strength-good').textContent = t.good.join(', ');
+  document.getElementById('strength-bad').textContent = t.bad.join(', ');
 
   document.getElementById('vs-best-name').textContent = t.vsBest.name;
   document.getElementById('vs-best-reason').textContent = t.vsBest.reason;
@@ -831,13 +1046,16 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ===================== 공유하기 =====================
-  const shareBtn = document.getElementById('share-btn');
-  shareBtn.addEventListener('click', function () {
-    const btn = this;
+  function shareResult(btn) {
     const originalText = btn.textContent;
-    const typeName = document.getElementById('result-type-name').textContent;
+    // 다른 유형을 둘러보는 중에도 '내' 결과 기준으로 공유
+    const typeName = myTypeKey
+      ? TYPES[myTypeKey].name
+      : document.getElementById('result-type-name').textContent;
     const shareText = '나는 "' + typeName + '" 타입! 링 위에서 나는 어떤 파이터일까? 너도 테스트해봐';
-    const shareUrl = window.location.href;
+    // 받는 사람이 열면 '친구의 결과' 카드가 보이도록 링크에 내 유형을 담는다 (?type=OUT)
+    const baseUrl = window.location.href.split(/[?#]/)[0];
+    const shareUrl = myTypeKey ? baseUrl + '?type=' + myTypeKey : baseUrl;
 
     if (navigator.share) {
       navigator.share({
@@ -853,8 +1071,138 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('공유 링크: ' + shareUrl);
       });
     }
+  }
+  document.querySelectorAll('.js-share').forEach(btn => {
+    btn.addEventListener('click', function () { shareResult(this); });
+  });
+});
+
+// ===================== 친구가 공유한 결과 (?type=OUT) =====================
+document.addEventListener('DOMContentLoaded', function () {
+  const key = new URLSearchParams(window.location.search).get('type');
+  if (!key || !Object.prototype.hasOwnProperty.call(TYPES, key)) return;   // 없거나 잘못된 값이면 무시
+  const t = TYPES[key];
+  const img = document.getElementById('friend-card-img');
+  img.onerror = function () { img.style.display = 'none'; };
+  img.src = t.image;
+  img.alt = t.name + ' 캐릭터';
+  document.getElementById('friend-card-name').textContent = t.name;
+  document.getElementById('friend-card-copy').textContent = t.copySub;
+  document.getElementById('friend-card').style.display = 'flex';
+});
+
+// ===================== 전면 모달 =====================
+// ▼ [콘텐츠 전체보기] 배너를 추가하려면 아래 목록에 한 줄만 추가하세요. (위에서부터 순서대로 표시됩니다)
+//   { image: '이미지 경로', link: '이동할 주소', alt: '배너 설명' }
+//   link를 비워 두면('') 눌러도 이동하지 않습니다.
+const BANNERS = [
+  { image: 'images/banner_ox.png', link: 'https://tmt-gym.github.io/event/ox.html', alt: 'OX 이벤트 배너' },
+  { image: 'images/banner_style.png', link: 'https://tmt-gym.github.io/test/index.html', alt: '스타일 배너' },
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+  // 모달 열기/닫기 (공통): 카드 클릭 → 열림 / ✕ 또는 ESC → 닫힘
+  function bindModal(modalId, openId, closeId) {
+    const modal = document.getElementById(modalId);
+    const openBtn = document.getElementById(openId);
+    const closeBtn = document.getElementById(closeId);
+
+    function openModal() {
+      modal.classList.add('active');
+      modal.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    openBtn.addEventListener('click', function (e) { e.preventDefault(); openModal(); });
+    closeBtn.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+  }
+  bindModal('banner-modal', 'banner-modal-open', 'banner-modal-close');
+  bindModal('gym-modal', 'gym-modal-open', 'gym-modal-close');
+
+  // 배너 목록 그리기
+  const listEl = document.getElementById('banner-list');
+  BANNERS.forEach(function (b) {
+    const a = document.createElement('a');
+    a.className = 'banner-item';
+    a.href = b.link || '#';
+    if (b.link) {
+      a.target = '_blank';
+      a.rel = 'noopener';
+    } else {
+      a.addEventListener('click', function (e) { e.preventDefault(); });
+    }
+    const img = new Image();
+    img.alt = b.alt || '';
+    img.onerror = function () {
+      a.textContent = '';
+      const ph = document.createElement('div');
+      ph.className = 'banner-placeholder';
+      ph.textContent = '배너 이미지 자리 (' + b.image + ')';
+      a.appendChild(ph);
+    };
+    img.src = b.image;
+    a.appendChild(img);
+    listEl.appendChild(a);
   });
 });
 </script>
+
+<!-- 전면 모달 1: 콘텐츠 전체보기 (배너 목록은 위쪽 스크립트의 BANNERS 에서 관리) -->
+<div class="full-modal" id="banner-modal" role="dialog" aria-modal="true" aria-label="콘텐츠 전체보기">
+  <div class="full-modal-bar">
+    <div class="full-modal-bar-inner">
+      <span class="full-modal-title">콘텐츠 전체보기</span>
+      <button class="full-modal-close" id="banner-modal-close" aria-label="닫기">✕</button>
+    </div>
+  </div>
+  <div class="banner-list" id="banner-list"></div>
+</div>
+
+<!-- 전면 모달 2: TMT GYM 둘러보기 -->
+<div class="full-modal gym-modal" id="gym-modal" role="dialog" aria-modal="true" aria-label="TMT GYM 둘러보기">
+  <div class="full-modal-bar">
+    <div class="full-modal-bar-inner">
+      <span class="full-modal-title">TMT GYM 둘러보기</span>
+      <button class="full-modal-close" id="gym-modal-close" aria-label="닫기">✕</button>
+    </div>
+  </div>
+
+  <div class="gym-modal-body">
+    <div class="gym-name">토마토 복싱클럽</div>
+    <div class="gym-location">강동구청역 2번 출구 바로 앞</div>
+
+    <div class="gym-gallery">
+      <div class="gym-photo"><img src="images/gym1.jpg" alt="TMT GYM 체육관 사진 1" onerror="this.parentElement.textContent='체육관 사진 1 (images/gym1.jpg)'"></div>
+      <div class="gym-photo"><img src="images/gym2.jpg" alt="TMT GYM 체육관 사진 2" onerror="this.parentElement.textContent='체육관 사진 2 (images/gym2.jpg)'"></div>
+      <div class="gym-photo"><img src="images/gym3.jpg" alt="TMT GYM 체육관 사진 3" onerror="this.parentElement.textContent='체육관 사진 3 (images/gym3.jpg)'"></div>
+    </div>
+
+    <div class="gym-benefits">
+      📌 운동장비 무료제공 (글러브+핸드랩)<br>
+      📌 무료체험 (월~금 · 사전예약 필수)<br>
+      📌 복싱 + 체형교정 + 식단관리 동시진행<br>
+      📌 2+1 가족 할인<br>
+      📌 공무원 할인
+    </div>
+
+    <div class="gym-hours">
+      <div class="gym-hours-label">운영시간</div>
+      <div class="gym-hours-row"><span>평일</span><b>14:00 ~ 22:00</b></div>
+      <div class="gym-hours-row"><span>주말 / 공휴일</span><span class="closed">휴무</span></div>
+    </div>
+  </div>
+
+  <div class="gym-modal-cta">
+    <div class="gym-modal-cta-inner">
+      <a class="gym-place-btn" id="gym-place-link" href="https://naver.me/GwpPbdtD" target="_blank" rel="noopener">네이버 플레이스 바로가기</a>
+    </div>
+  </div>
+</div>
 </body>
 </html>
