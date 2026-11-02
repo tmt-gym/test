@@ -37,13 +37,14 @@
   const fbDb = getDatabase(fbApp);
 
   const TYPE_KEYS = ['OUT', 'SLU', 'SWA', 'BOP', 'COU'];
+  const DB_ROOT = 'boxingStyle';   // 이 검사의 데이터는 전부 이 폴더 아래에 쌓인다
 
   // 결과 저장: 개별 기록(results) + 유형별 참여 수(stats/counts) 1 증가
   window.saveResultToFirebase = async function (typeKey, typeName) {
     try {
       const jobs = [
-        push(ref(fbDb, 'results'), { typeKey: typeKey, typeName: typeName, timestamp: serverTimestamp() }),
-        runTransaction(ref(fbDb, 'stats/counts/' + typeKey), function (cur) { return (cur || 0) + 1; })
+        push(ref(fbDb, DB_ROOT + '/results'), { typeKey: typeKey, typeName: typeName, timestamp: serverTimestamp() }),
+        runTransaction(ref(fbDb, DB_ROOT + '/stats/counts/' + typeKey), function (cur) { return (cur || 0) + 1; })
       ];
       const done = await Promise.allSettled(jobs);
       done.forEach(function (r) {
@@ -57,7 +58,7 @@
   // 유형별 참여 수 읽기 → { OUT: 12, SLU: 3, ... } (실패하면 null)
   window.fetchTypeCounts = async function () {
     try {
-      const snap = await get(ref(fbDb, 'stats/counts'));
+      const snap = await get(ref(fbDb, DB_ROOT + '/stats/counts'));
       const v = snap.val() || {};
       const counts = {};
       TYPE_KEYS.forEach(function (k) { counts[k] = Number(v[k]) || 0; });
