@@ -146,9 +146,7 @@
   #screen-start { align-items: center; justify-content: center; text-align: center; }
   .title-image-slot { width: 300px; max-width: 100%; margin-bottom: 4px; }
   .title-image-slot img { width: 100%; height: auto; display: block; }
-  /* 제목 묶음: 이미지는 '제목 글자 너비'의 80%로 보인다 (이미지는 너비 계산에서 빠지고, 제목 너비를 기준으로 줄어든다) */
-  .start-head { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
-  .start-head-img { display: block; width: 0; min-width: 80%; height: auto; margin-bottom: 12px; }   /* 제목 너비의 80% */
+  .start-gym-img { display: block; width: 182px; max-width: 100%; height: auto; margin-bottom: 12px; }
   .start-title {
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
     font-size: 32px; color: #111;
@@ -507,13 +505,11 @@
 
   <!-- ===================== 1. 시작 화면 ===================== -->
   <section class="screen active" id="screen-start">
+    <img class="start-gym-img" src="images/home_gym.png" alt="강동구청역 토마토복싱" onerror="this.style.display='none'">
     <div class="title-image-slot" id="title-image-slot">
       <img src="images/main.png" alt="타이틀 이미지" onerror="this.style.display='none'">
     </div>
-    <div class="start-head">
-      <img class="start-head-img" src="images/home_gym.png" alt="강동구청역 토마토복싱" onerror="this.style.display='none'">
-      <h1 class="start-title">링 위에서 나는<br>어떤 파이터일까?</h1>
-    </div>
+    <h1 class="start-title">링 위에서 나는<br>어떤 파이터일까?</h1>
     <p class="start-sub">11가지 질문으로 알아보는<br>나의 복싱 스타일</p>
     <div class="friend-card" id="friend-card">
       <img class="friend-card-img" id="friend-card-img" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
