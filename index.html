@@ -144,8 +144,13 @@
 
   /* ===== 시작 화면 ===== */
   #screen-start { align-items: center; justify-content: center; text-align: center; }
-  .title-image-slot { width: 340px; max-width: 100%; margin-bottom: 4px; }
+  .title-image-slot { width: 300px; max-width: 100%; margin-bottom: 4px; }
   .title-image-slot img { width: 100%; height: auto; display: block; }
+  .start-eyebrow {
+    font-family: 'Pretendard', sans-serif; font-weight: 600;
+    font-size: 16px; letter-spacing: 0.02em; color: #fcf4ea;
+    background: #c93a38; padding: 6px 14px; border-radius: 4px; margin-bottom: 12px;
+  }
   .start-title {
     font-family: 'Mujeokhaebeong', sans-serif; font-weight: 700;
     font-size: 32px; color: #111;
@@ -507,6 +512,7 @@
     <div class="title-image-slot" id="title-image-slot">
       <img src="images/main.png" alt="타이틀 이미지" onerror="this.style.display='none'">
     </div>
+    <p class="start-eyebrow">강동구청역 토마토복싱</p>
     <h1 class="start-title">링 위에서 나는<br>어떤 파이터일까?</h1>
     <p class="start-sub">11가지 질문으로 알아보는<br>나의 복싱 스타일</p>
     <div class="friend-card" id="friend-card">
