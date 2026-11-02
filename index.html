@@ -402,6 +402,11 @@
   }
   .gym-hours-row b { font-weight: 700; color: #111; }
   .gym-hours-row .closed { font-weight: 700; color: #c93a38; }
+  .gym-hours-note {
+    margin-top: -2px; padding-bottom: 6px;
+    font-family: 'Pretendard', sans-serif; font-size: 13px; font-weight: 500;
+    line-height: 1.5; color: #888;
+  }
   .gym-modal-cta {
     position: sticky; bottom: 0; flex-shrink: 0;
     background: #fff; border-top: 1px solid #eee;
@@ -1341,7 +1346,9 @@ document.addEventListener('DOMContentLoaded', function () {
     <div class="gym-hours">
       <div class="gym-hours-label">운영시간</div>
       <div class="gym-hours-row"><span>평일</span><b>14:00 ~ 22:00</b></div>
-      <div class="gym-hours-row"><span>주말 / 공휴일</span><span class="closed">휴무</span></div>
+      <div class="gym-hours-row"><span>토요일 · 오픈매트</span><b>12:00 ~ 22:00</b></div>
+      <div class="gym-hours-note">오픈매트: 수업과 지도자 없이 각자 자유롭게 운동하는 시간이에요.</div>
+      <div class="gym-hours-row"><span>일요일</span><span class="closed">휴무</span></div>
     </div>
   </div>
 
